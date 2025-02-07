@@ -1,6 +1,7 @@
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -8,6 +9,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
+// Serve the web GUI
+app.use(express.static(path.join(__dirname, "public")));
+
+// Proxy Middleware
 app.use(
   "/proxy",
   createProxyMiddleware({
@@ -24,5 +29,5 @@ app.use(
 );
 
 app.listen(PORT, () => {
-  console.log(`Proxy running on http://localhost:${PORT}`);
+  console.log(`Proxy running at http://localhost:${PORT}`);
 });
