@@ -12,19 +12,22 @@ app.use(cors());
 // Serve the web GUI
 app.use(express.static(path.join(__dirname, "public")));
 
-// Proxy Middleware
+// Dynamic Proxy Middleware
 app.use(
-  "/proxy",
+  "/proxy/",
   createProxyMiddleware({
-    target: "https://example.com/",
-    changeOrigin: true,
-    pathRewrite: (path, req) => {
-      const newTarget = req.query.url;
-      return newTarget ? path.replace("/proxy", newTarget) : path;
+    target: "", // Will be set dynamically
+    router: (req) => {
+      return req.query.url || "https://www.google.com"; // Default to Google
     },
-    onProxyReq: (proxyReq, req) => {
+    changeOrigin: true,
+    selfHandleResponse: false,
+    onProxyReq: (proxyReq, req, res) => {
       console.log(`Proxying request to: ${req.query.url}`);
     },
+    onError: (err, req, res) => {
+      res.status(500).send("Proxy Error: Unable to load site.");
+    }
   })
 );
 
