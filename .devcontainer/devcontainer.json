@@ -1,0 +1,5 @@
+{
+  "name": "Gaming Proxy",
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install && npm start"
+}
