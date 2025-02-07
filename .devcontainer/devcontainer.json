@@ -1,22 +1,5 @@
 {
-  "name": "Gaming Proxy Dev Container",
-  "image": "mcr.microsoft.com/vscode/devcontainers/javascript-node:0-14",
-  "features": {
-    "node": "latest"
-  },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
-  "postCreateCommand": [
-    "apt-get update && apt-get install -y wget curl libx11-dev libxkbfile-dev libsecret-1-dev libxss1 libgdk-pixbuf2.0-dev libasound2 libnss3 libgbm-dev libappindicator3-1 libgtk-3-0",
-    "npm install",
-    "npm start"
-  ],
+  "name": "Gaming Proxy",
   "forwardPorts": [3000],
-  "portsAttributes": {
-    "3000": {
-      "label": "Proxy Server",
-      "onAutoForward": "openBrowser"
-    }
-  }
+  "postCreateCommand": "npm install && npm start"
 }
