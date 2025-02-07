@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
   "/proxy",
   createProxyMiddleware({
-    target: "https.google.com",
+    target: "https://no.uglisounds.se/",
     changeOrigin: true,
     pathRewrite: (path, req) => {
       const newTarget = req.query.url;
