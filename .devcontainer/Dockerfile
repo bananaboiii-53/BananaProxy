@@ -10,5 +10,7 @@ COPY . .
 # Expose port 3000
 EXPOSE 3000
 
+RUN npm install
+
 # Start the proxy server
 CMD ["node", "server.js"]
