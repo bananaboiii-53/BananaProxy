@@ -12,7 +12,7 @@ app.use(cors());
 // Serve the web GUI
 app.use(express.static(path.join(__dirname, "public")));
 
-// Use Puppeteer to render the page and serve it
+// Proxy route with Puppeteer handling interactions
 app.get("/proxy", async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -35,7 +35,24 @@ app.get("/proxy", async (req, res) => {
       waitUntil: "domcontentloaded", // Wait until the page is loaded
     });
 
-    // Get the HTML content of the page
+    // Intercept clicks or form submissions and let Puppeteer handle them
+    page.on("framenavigated", async (frame) => {
+      const currentUrl = frame.url();
+      console.log(`Navigating to: ${currentUrl}`);
+      if (currentUrl !== targetUrl) {
+        res.redirect(currentUrl); // Redirect the user if the URL changes (e.g., after clicking or submitting a form)
+      }
+    });
+
+    // Handle requests after form submissions or clicks
+    page.on("request", (request) => {
+      if (request.isNavigationRequest()) {
+        console.log("Navigating: ", request.url());
+        res.redirect(request.url());
+      }
+    });
+
+    // Get the HTML content of the page after interaction
     const content = await page.content();
 
     // Send the rendered HTML to the client
