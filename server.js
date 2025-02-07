@@ -1,71 +1,47 @@
-const express = require("express");
-const puppeteer = require("puppeteer");
-const cors = require("cors");
-const path = require("path");
-require("dotenv").config();
-
+const express = require('express');
+const axios = require('axios'); // To make HTTP requests
+const { URL } = require('url');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Middleware to parse JSON and URL-encoded bodies (for POST/PUT requests)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Serve the web GUI
-app.use(express.static(path.join(__dirname, "public")));
-
-// Proxy route with Puppeteer handling interactions
-app.get("/proxy", async (req, res) => {
+// Handle incoming proxy requests for any HTTP method
+app.all('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
-
   if (!targetUrl) {
-    return res.status(400).send("Error: No URL provided.");
+    return res.status(400).send('No URL provided.');
   }
 
   try {
-    // Launch Puppeteer browser with debugging enabled
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-    const page = await browser.newPage();
+    // Parse the URL to make sure we handle paths and queries correctly
+    const parsedUrl = new URL(targetUrl);
+    const fullUrl = `${parsedUrl.origin}${parsedUrl.pathname}${parsedUrl.search}`;
 
-    // Set a user-agent to mimic a real browser
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-    );
+    console.log(`Proxying ${req.method} request to: ${fullUrl}`);
 
-    // Open the requested URL
-    await page.goto(targetUrl, {
-      waitUntil: "domcontentloaded", // Wait until the page is loaded
+    // Make the request to the target URL (handling GET, POST, etc.)
+    const response = await axios({
+      method: req.method, // Forward the HTTP method (GET, POST, etc.)
+      url: fullUrl,
+      data: req.body, // Forward the body for POST/PUT requests
+      headers: req.headers, // Forward headers from the client
+      responseType: 'stream' // Stream the response for large files or dynamic content
     });
 
-    // Intercept clicks or form submissions and let Puppeteer handle them
-    page.on("framenavigated", async (frame) => {
-      const currentUrl = frame.url();
-      console.log(`Navigating to: ${currentUrl}`);
-      if (currentUrl !== targetUrl) {
-        res.redirect(currentUrl); // Redirect the user if the URL changes (e.g., after clicking or submitting a form)
-      }
-    });
+    // Set the correct content-type and forward the response body
+    res.setHeader('Content-Type', response.headers['content-type']);
+    response.data.pipe(res); // Pipe the response back to the client
 
-    // Handle requests after form submissions or clicks
-    page.on("request", (request) => {
-      if (request.isNavigationRequest()) {
-        console.log("Navigating: ", request.url());
-        res.redirect(request.url());
-      }
-    });
-
-    // Get the HTML content of the page after interaction
-    const content = await page.content();
-
-    // Send the rendered HTML to the client
-    res.send(content);
-
-    // Close the browser
-    await browser.close();
   } catch (error) {
-    console.error("Error while fetching page:", error);
+    console.error('Error while proxying request:', error);
     res.status(500).send("Error while rendering the page. Please check the server logs.");
   }
 });
 
+// Start the server to listen for proxy requests
 app.listen(PORT, () => {
-  console.log(`Proxy running at http://localhost:${PORT}`);
+  console.log(`Proxy server running at http://localhost:${PORT}`);
 });
