@@ -1,5 +1,16 @@
 {
-  "name": "Gaming Proxy",
-  "forwardPorts": [3000],
-  "postCreateCommand": "npm install && npm start"
+  "name": "Proxy Server",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-node-azure-pack"
+  ],
+  "ports": [
+    "3000"
+  ]
 }
